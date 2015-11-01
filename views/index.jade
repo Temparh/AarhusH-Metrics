@@ -1,0 +1,26 @@
+doctype html
+html
+	head
+		title Banegården
+		link(href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
+		script.
+			locations = !{locations};
+		link(href='/stylesheets/index.css', rel='stylesheet')
+	body
+
+		nav.navbar.navbar-default
+			div.container-fluid
+				ul.nav.navbar-nav.navbar.middle
+					each val in weekdays
+						li
+							a(href='./days/'+val)= val
+
+		div.container
+				div.jumbotron
+					h1 Aarhus Banegård
+					p Discover interesting metrics and statistics on train departures and arrivals here!
+					a.btn.btn-primary.btn-lg(href='#') Check it out!
+		//div(id='map')
+		//ul(id='ul_locations')
+		//script(src='/javascripts/map.js')
+		//script(async defer src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBWQ3v3BPFlqWv_5oTvNvCs8-zGHFMurYU&callback=initMap')

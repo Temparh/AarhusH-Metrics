@@ -1,0 +1,13 @@
+doctype html
+html
+	head
+		title=chosenDay
+		link(href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
+	body
+		nav.navbar.navbar-default
+			div.container-fluid
+				ul.nav.navbar-nav.navbar.middle
+					each val in weekdays
+						li
+							a(href='/days/'+val)= val
+
