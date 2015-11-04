@@ -180,7 +180,10 @@ function getTravelRecords(url, callback) {
 		return;
 	}
 	request(url, function(err, res, body){
-		console.log(body);
+		if (!body) {
+			callback(false);
+			return;
+		}
 		var body = JSON.parse(body);
 		if (!body.JourneyDetail || !body.JourneyDetail.Stop) {
 			callback(false);
