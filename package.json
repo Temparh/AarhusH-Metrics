@@ -1,7 +1,7 @@
 {
-  "name": "rejseplanen_use",
-  "version": "0.0.1",
-  "private": true,
+  "name": "rejseplanen_metrics",
+  "version": "0.1.1",
+  "main": "server.js",
   "description": "abstract_rejseplanen",
   "dependencies": {
     "express": "4.10.2",

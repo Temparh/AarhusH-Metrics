@@ -305,6 +305,8 @@ function fetchTripsFromDay(targetDate, callback){
 }
 
 
+
+app.set('port', (process.env.PORT || 3000));
 app.get('/days/', function(req, res){
 	res.redirect('/days/' + getWeekdaysFromNow()[0]);
 })
@@ -327,6 +329,6 @@ app.use(function(req, res, next){
 });
 
 
-app.listen(3000, function (){
-	console.log('Server running...');
+app.listen(app.get('port'), function (){
+	console.log('Server running on port: ' + app.get('port'));
 });
