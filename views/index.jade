@@ -8,7 +8,7 @@ html
 		link(href='/stylesheets/index.css', rel='stylesheet')
 	body
 
-		nav.navbar.navbar-default
+		nav.navbar.navbar-default.navbar-fixed-top
 			div.container-fluid
 				ul.nav.navbar-nav
 					each val in weekdays
@@ -20,6 +20,7 @@ html
 					center
 						h1.title-text Aarhus Hovedbanegård
 						p Discover interesting metrics and statistics on train departures and arrivals here!
+						p This website uses the Rejseplan API to create a look into the coming week of train departures. 
 						br
 						img.img-rounded(src='http://gis.aarhus.dk/kommuneatlas/gadebeskrivelser/Banegaardspladsen_1.jpg')
 						br

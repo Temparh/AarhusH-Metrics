@@ -2,7 +2,7 @@ html, body {
 	height: 100%;
 	width: 100%;
 	margin: 0px;
-	padding: 0px;
+	padding: 30px;
 	background-color: white;
 }
 
@@ -10,7 +10,6 @@ html, body {
 	padding: 0px;
 	margin: 0px;
 	height: 700px;
-	width: 700px;
 	background-color: gray;
 }
 
@@ -42,4 +41,16 @@ a.green{
   color: #fff !important;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.33);
   -webkit-font-smoothing: antialiased;
+}
+
+.forward {
+  position: fixed;
+  bottom: 2%;
+   right: 2%;  
+}
+
+.backwards {
+  position: fixed;
+  bottom: 2%;
+  left: 2%;  
 }

@@ -4,10 +4,12 @@ html
 		title=chosenDay
 		link(href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
 		script.
-			lastStops = !{lastStops};
+			lastStops 		= !{lastStops};
+			totalDeparts 	= !{totalDeparts};
+			chosenDay		= '!{chosenDay}';
 		link(href='/stylesheets/index.css', rel='stylesheet')
 	body
-		nav.navbar.navbar-default
+		nav.navbar.navbar-default.navbar-fixed-top
 			div.container-fluid
 				ul.nav.navbar-nav.navbar.middle
 					li
@@ -16,19 +18,33 @@ html
 						li
 							a(href='/days/'+val)= val
 		div.container
-			div.jumbotron
+			div.jumbotron.container-fluid
 				center
-					h1= chosenDay
+					h1.title-text= chosenDay
+					p(id='trainDeparts') swag
 					br
 					br 
 					div(id='map')
 					br
 					br
-				script(src='/javascripts/map.js')
-				script(async defer src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBWQ3v3BPFlqWv_5oTvNvCs8-zGHFMurYU&callback=initMap')
+			
+		script(src='/javascripts/map.js')
+		script(async defer src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBWQ3v3BPFlqWv_5oTvNvCs8-zGHFMurYU&callback=initMap')
+					
+		script.
+			document.getElementById('trainDeparts').innerHTML = "There are #{totalDeparts} trains departuring from Aarhus H on this #{chosenDay}.";
 
 
-				each val, index in weekdays
-					if val == chosenDay
-						a.btn.btn-primary.btn-m.pull-right.btn-custom(href='/days/'+weekdays[(index+1)%7]) Learn about #{weekdays[(index+1)%7]}
-				br
+		each val, index in weekdays
+			if val == chosenDay
+				- var forward = weekdays[(index+1)%7]
+				a.btn.btn-primary.btn-m.pull-right.btn-custom.forward(href='/days/'+forward)='Learn about ' + forward
+
+				- var backwards = weekdays[(index-1)%7]
+				if ((index-1)%7)<0
+					- var backwards = weekdays[6]
+				a.btn.btn-primary.btn-m.pull-right.btn-custom.backwards(id='go_back' href='/days/'+backwards)='Learn about ' + backwards
+
+
+
+

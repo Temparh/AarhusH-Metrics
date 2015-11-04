@@ -1,5 +1,6 @@
 var express = require('express')
  ,	request = require('request')
+ ,	favicon = require('serve-favicon')
  ,	app		= express()
  , 	rootUrl	= require('./rejseplanen_rootUrl.json').root // Protected out of respect for Rejseplanen.dk
  ,	mkJSON	= '&format=json' 
@@ -44,6 +45,7 @@ function getSpecificLocation( input, callback ){
 function getFullAarhusHDeparture(today, callback) { 
 	var time 		= '00:00';
 	var dateOfMonth = today.getDate(); // api only accepts dd.mm.yy format.
+	today.setHours(0,0,0,0);
 	if (Number(dateOfMonth) < 10) dateOfMonth = '0' + String(dateOfMonth);
 	
 	var date 	= dateOfMonth + '.' + (today.getMonth()+1) + '.' + today.getFullYear().toString().substring(2,4); 
@@ -242,44 +244,10 @@ function dayToNumber(day, week) {
 	}
 }
 
-///////////////////////////
-//  JADE IS AWESOME, DUDE!
-app.set('view engine', 'jade');
 
-app.use(express.static('public'));
-
-// Make sure our metrics are up to date.
-app.use(function(req, res, next){
-	checkUpdateDeparts(function(){
-		console.log('received data. continuing..');
-		next();
-	});
-});
 
 
 var dailyTrips = [];
-// Page for each day of the week to show statistics on.
-app.get('/days/:day', function(req, res){
-	// If errorenous url is given, go to today's date.
-	if (weekdays.indexOf(req.params.day) <= -1) {
-		req.params.day = getWeekdaysFromNow()[0];
-	}
-
-	var targetDate = new Date();
-	targetDate.setHours(0,0,0,0);
-	var targetDayNum = dayToNumber(req.params.day, getWeekdaysFromNow()); // Should give number FROM today's date.
-	targetDate.setDate(Number(targetDate.getDate())+Number(targetDayNum)); // Today's date + the week day
-	
-	fetchTripsFromDay(targetDate, function(lastStops){
-		res.render('days', {
-				weekdays: getWeekdaysFromNow()
-			,  	chosenDay: req.params.day
-			, 	lastStops: JSON.stringify(lastStops)
-		});		
-	})
-});
-
-
 function fetchTripsFromDay(targetDate, callback){
 	for (var i=0; i<dailyTrips.length; i++){
 		if (dailyTrips[i].date.getTime() == targetDate.getTime()) {
@@ -297,7 +265,6 @@ function fetchTripsFromDay(targetDate, callback){
 			getTravelRecords(departList[i].JourneyDetailRef.ref, function(trip){
 				if (trip) {
 					lastStops.push(trip);
-					console.log('pushed trip..');
 				} else {
 					totalNum = totalNum - 1;
 				}
@@ -314,8 +281,54 @@ function fetchTripsFromDay(targetDate, callback){
 }
 
 
+///////////////////////////
+//  JADE IS AWESOME, DUDE!
+app.set('view engine', 'jade');
+
+app.use(express.static('public'));
+app.use(favicon(__dirname + '/public/data/favicon.ico'));
+
+// Make sure our metrics are up to date.
+app.use(function(req, res, next){
+	checkUpdateDeparts(function(){
+		console.log('received data. continuing..');
+		next();
+	});
+});
 
 app.set('port', (process.env.PORT || 3000));
+
+
+
+// Page for each day of the week to show statistics on.
+app.get('/days/:day', function(req, res){
+	// If errorenous url is given, go to today's date.
+	if (weekdays.indexOf(req.params.day) <= -1) {
+		req.params.day = getWeekdaysFromNow()[0];
+	}
+
+	var targetDate = new Date();
+	targetDate.setHours(0,0,0,0);
+	var targetDayNum = dayToNumber(req.params.day, getWeekdaysFromNow()); // Should give number FROM today's date.
+	targetDate.setDate(Number(targetDate.getDate())+Number(targetDayNum)); // Today's date + the week day
+	
+	var totalDepartsToday = 0;
+	for (var i=0; i<departuresByDay.length; i++){
+		if (departuresByDay[i].date.getTime() == targetDate.getTime()){
+			totalDepartsToday = departuresByDay[i].departs.length;
+		} 
+	}
+
+	fetchTripsFromDay(targetDate, function(lastStops){
+		res.render('days', {
+				weekdays: getWeekdaysFromNow()
+			,  	chosenDay: req.params.day
+			, 	lastStops: JSON.stringify(lastStops)
+			,	totalDeparts: totalDepartsToday
+		});		
+	})
+});
+
 app.get('/days/', function(req, res){
 	res.redirect('/days/' + getWeekdaysFromNow()[0]);
 })
