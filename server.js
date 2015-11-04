@@ -175,7 +175,10 @@ function getDeparturesByDay(date, callback){
 }
 
 function getTravelRecords(url, callback) {
-	console.log(url);
+	if (!url) {
+		callback(false);
+		return;
+	}
 	request(url, function(err, res, body){
 		var body = JSON.parse(body);
 		if (!body.JourneyDetail || !body.JourneyDetail.Stop) {
@@ -192,7 +195,7 @@ function getTravelRecords(url, callback) {
 // Middleware to check if we up to date.
 function checkUpdateDeparts(callback){
 	var rn = new Date();
-	console.log(dataInProgress);
+	console.log('data in progress:' + dataInProgress);
 	if ( (!departuresStamp || rn.getDate() != departuresStamp.getDate()) && !dataInProgress){
 		console.log('updating..');
 		updateDeparts(callback);
