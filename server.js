@@ -175,6 +175,7 @@ function getDeparturesByDay(date, callback){
 }
 
 function getTravelRecords(url, callback) {
+	console.log(url);
 	request(url, function(err, res, body){
 		var body = JSON.parse(body);
 		if (!body.JourneyDetail || !body.JourneyDetail.Stop) {
@@ -289,6 +290,7 @@ function fetchTripsFromDay(targetDate, callback){
 			getTravelRecords(departList[i].JourneyDetailRef.ref, function(trip){
 				if (trip) {
 					lastStops.push(trip);
+					console.log('pushed trip..');
 				} else {
 					totalNum = totalNum - 1;
 				}
