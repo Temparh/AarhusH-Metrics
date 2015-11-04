@@ -3,7 +3,8 @@ var express = require('express')
  ,	app		= express()
  , 	rootUrl	= require('./rejseplanen_rootUrl.json').root // Protected out of respect for Rejseplanen.dk
  ,	mkJSON	= '&format=json' 
- , 	locationsIDs = {}; // No need to call location IDs over and over.
+ , 	locationsIDs = {} // No need to call location IDs over and over.
+ , 	dataInProgress = false;
 
 
 
@@ -121,6 +122,8 @@ var departuresStamp;
 var departuresTotal = 0;
 var countDays = 7; // Days, including present, we should use find for our table.
 function updateDeparts(callback){
+	if (dataInProgress) return;
+	dataInProgress = true;
 	for (var i = 0; i < countDays; i++) {
 		var aimDate = new Date();
 		aimDate.setDate(Number(aimDate.getDate()+i));
@@ -135,6 +138,7 @@ function updateDeparts(callback){
 				});
 
 				updateDailyTrips(function(succes){
+					dataInProgress = false;
 					departuresStamp = new Date();
 					callback();
 				})
@@ -158,9 +162,7 @@ function updateDailyTrips(callback){
 	}
 }
 
-
-console.log('Initializing...');
-updateDeparts(function(){;
+checkUpdateDeparts(function(){;
 	console.log('Initialization complete!');
 }); // Init.
 
@@ -169,7 +171,7 @@ function getDeparturesByDay(date, callback){
 		if (departuresByDay[i].date.getDate() == date.getDate() && departuresByDay[i].date.getMonth() == date.getMonth()){
 			callback(departuresByDay[i]);
 		}
-	}
+	} 
 }
 
 function getTravelRecords(url, callback) {
@@ -185,14 +187,29 @@ function getTravelRecords(url, callback) {
 }
 
 
+
 // Middleware to check if we up to date.
 function checkUpdateDeparts(callback){
 	var rn = new Date();
-	if (rn.getDate() != departuresStamp.getDate()){
+	console.log(dataInProgress);
+	if ( (!departuresStamp || rn.getDate() != departuresStamp.getDate()) && !dataInProgress){
+		console.log('updating..');
 		updateDeparts(callback);
-	} else {
+		return;
+	} else if (!dataInProgress) {
 		callback(true);
+		return;
 	}
+
+	var counts = 0;
+	var waitForData = function() {
+		if (!dataInProgress){
+			callback(true);
+		} else if (counts < 50) { // Will stop after 25 seconds..
+			setTimeout(function(){waitForData()}, 500);
+		}
+	}
+	waitForData();
 }
 
 
@@ -226,6 +243,7 @@ app.use(express.static('public'));
 // Make sure our metrics are up to date.
 app.use(function(req, res, next){
 	checkUpdateDeparts(function(){
+		console.log('received data. continuing..');
 		next();
 	});
 });
