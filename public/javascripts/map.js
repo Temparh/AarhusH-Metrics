@@ -1,40 +1,45 @@
-function listLocations() {
-	var ul = document.getElementById('ul_locations');	
-
-	for (var i=0; i < locations.length; i++) {
-		console.log('itterating locations...');
-
-		var li = document.createElement('li');
-		li.appendChild(document.createTextNode(locations[i].name+ '. ID: ' + locations[i].id) );
-		ul.appendChild(li);
-	}
-}
-listLocations();
-
 //		 NOTE
 //	x is Longditude
 // 	y is Latitude
 
 var map;
-function initMap2(){
+function initMap(){
 	map = new google.maps.Map(document.getElementById('map'), {
-		center: {lat: locations[0].y/1000000+0.018, lng: locations[0].x/1000000},
-		zoom: 14,
-		minZoom: 13,	
-		maxZoom: 15,
+		center: {lat: 56.1585836-0.6, lng: 10.208542999999999},
+		zoom: 7
 	});
 
-	for (var i=0; i < locations.length; i++) {
-		var center = {lat: locations[i].y/1000000, lng: locations[i].x/1000000};
-		var busStop = new google.maps.Circle({
-			strokeColor: 'red',
+	//lastStops = JSON.parse(lastStops);
+	console.log(lastStops); // Array of arrays of objects
+
+
+	for (var i=0; i<lastStops.length; i++){ // array of array of objects
+		var pathCoords = [];
+		var locs = lastStops[i]
+
+		for (var h=0; h<locs.length; h++){ // array of objects
+			pathCoords.push({lng: locs[h].x/1000000, lat: locs[h].y/1000000});
+		}
+
+		var path = new google.maps.Polyline({
+			path: pathCoords,
+			geodesic: false,
+			strokeColor: '#FF0000',
+			strokeOpacity: 1.0,
+			strokeWeight: 2	
+		});
+		path.setMap(map);
+
+		var circle = new google.maps.Circle({
+			strokeColor: '#FF0000',
 			strokeOpacity: 0.8,
 			strokeWeight: 2,
-			fillColor: 'gray',
-			fillOpacity: 0.5,
+			fillColor: 'green',
+			fillOpacity: 0.05,
 			map: map,
-			center: center,
-			radius: 50
+			center: {lat: lastStops[i][lastStops[i].length-1].y/1000000, lng: lastStops[i][lastStops[i].length-1].x/1000000},
+			radius: 10000
 		});
 	}
+
 }

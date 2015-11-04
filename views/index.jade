@@ -1,7 +1,7 @@
 doctype html
 html
 	head
-		title Banegården
+		title Hovedbanegården
 		link(href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
 		script.
 			locations = !{locations};
@@ -10,17 +10,22 @@ html
 
 		nav.navbar.navbar-default
 			div.container-fluid
-				ul.nav.navbar-nav.navbar.middle
+				ul.nav.navbar-nav
 					each val in weekdays
 						li
-							a(href='./days/'+val)= val
+							a.green(href='/days/'+val)= val
 
 		div.container
 				div.jumbotron
-					h1 Aarhus Banegård
-					p Discover interesting metrics and statistics on train departures and arrivals here!
-					a.btn.btn-primary.btn-lg(href='#') Check it out!
-		//div(id='map')
-		//ul(id='ul_locations')
-		//script(src='/javascripts/map.js')
-		//script(async defer src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBWQ3v3BPFlqWv_5oTvNvCs8-zGHFMurYU&callback=initMap')
+					center
+						h1.title-text Aarhus Hovedbanegård
+						p Discover interesting metrics and statistics on train departures and arrivals here!
+						br
+						img.img-rounded(src='http://gis.aarhus.dk/kommuneatlas/gadebeskrivelser/Banegaardspladsen_1.jpg')
+						br
+						br
+						p Did you know that from today until next #{weekdays[0]}  #[span.trainDeparts #{totalDeparts}] trains depart from Aarhus Hovedbanegård?
+
+					br
+					br
+					a.btn.btn-primary.btn-lg.btn-custom(href='/days/'+weekdays[0]) Check it out!

@@ -3,11 +3,32 @@ html
 	head
 		title=chosenDay
 		link(href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
+		script.
+			lastStops = !{lastStops};
+		link(href='/stylesheets/index.css', rel='stylesheet')
 	body
 		nav.navbar.navbar-default
 			div.container-fluid
 				ul.nav.navbar-nav.navbar.middle
+					li
+						a(href='/') Home
 					each val in weekdays
 						li
 							a(href='/days/'+val)= val
+		div.container
+			div.jumbotron
+				center
+					h1= chosenDay
+					br
+					br 
+					div(id='map')
+					br
+					br
+				script(src='/javascripts/map.js')
+				script(async defer src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBWQ3v3BPFlqWv_5oTvNvCs8-zGHFMurYU&callback=initMap')
 
+
+				each val, index in weekdays
+					if val == chosenDay
+						a.btn.btn-primary.btn-m.pull-right.btn-custom(href='/days/'+weekdays[(index+1)%7]) Learn about #{weekdays[(index+1)%7]}
+				br

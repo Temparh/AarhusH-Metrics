@@ -6,8 +6,6 @@ var express = require('express')
  , 	locationsIDs = {}; // No need to call location IDs over and over.
 
 
-console.log(rootUrl);
-
 
 // Search function for finding stops. Returns an array of matches.
 function searchLocations(input, callback){
@@ -51,31 +49,51 @@ function getFullAarhusHDeparture(today, callback) {
 	var useBus 	= '&useBus=0'; 
 	var id;
 	var AarhusHDepartures = [];
+	var waitInBeteween = 0; // In minutes
 
 	// Local function we loop.
-	var getDepartBoard = function() {
+	var getDepartBoard = function(notStart) {
 		var timeStr = '&time=' + time;
 		var dateStr	= '&date=' + date;
 		var useURL = rootUrl + '/departureBoard/?id=' + id + dateStr + timeStr + useBus + mkJSON;
-		//console.log(useURL);
+
 		request(useURL, function(err, res, body){
 			body = JSON.parse(body);
-			//console.log(body);
 			var departs = body.DepartureBoard.Departure;
-
+		
 			// Check all departures.
 			for (var i=0; i < departs.length; i++){
+				var prevDepart = AarhusHDepartures[AarhusHDepartures.length-1];
+
 				// If departures proceed into the following day, stop finding more and return-
 				if (departs[i].date != date) {
 					callback(AarhusHDepartures, today);
 					return;
 				}
-				// Push departure to our table and restart function at our end point.
-				AarhusHDepartures.push(departs[i]);
+				
+				// Weed out duplicates from previous api call.
+				// Calc wait time.				
+				if (!(prevDepart && prevDepart.name == departs[i].name)) {
+					if (prevDepart) {	
+
+						// WIP - Beta feature			
+						var timeOfThisDepart = new Date();
+						timeOfThisDepart.setHours(Number(departs[i].time.substring(0,2)),Number(departs[i].time.substring(3,5)));
+
+						var timeOfPrevDepart = new Date();
+						timeOfPrevDepart.setHours(Number(prevDepart.time.substring(0,2)),Number(prevDepart.time.substring(3,5)));
+						var minuteDif = (timeOfThisDepart.getHours() - timeOfPrevDepart.getHours()) * 60;
+						minuteDif += timeOfThisDepart.getMinutes() - timeOfPrevDepart.getMinutes();
+						waitInBeteween += minuteDif;
+						
+					}
+					AarhusHDepartures.push(departs[i]);
+				}
+				
+				// restart function at our end point.
 				if (i == departs.length-1){
-					console.log(time);
 					time = departs[i].time;
-					getDepartBoard();
+					getDepartBoard(true);
 				}
 			}
 		});	
@@ -100,28 +118,71 @@ function getFullAarhusHDeparture(today, callback) {
 // Updates the table of departure information.
 var departuresByDay = [];
 var departuresStamp;
+var departuresTotal = 0;
+var countDays = 7; // Days, including present, we should use find for our table.
 function updateDeparts(callback){
-	var countDays = 2; // Days, including present, we should use find for our table.
 	for (var i = 0; i < countDays; i++) {
 		var aimDate = new Date();
 		aimDate.setDate(Number(aimDate.getDate()+i));
 		getFullAarhusHDeparture(aimDate, function (arrayOfDeparts, date){
-			var numOfDeparts = arrayOfDeparts.length;
-			departuresByDay.push({date: date, departs: numOfDeparts});
-			
+			departuresByDay.push({date: date, departs: arrayOfDeparts});
+			departuresTotal += arrayOfDeparts.length; // Total count of departs.
+
 			// since it's async, we'll have to check if we're the last coming in.
 			if (departuresByDay.length >= countDays){
 				departuresByDay.sort(function(a, b){
 					return a.date.getTime() - b.date.getTime();
 				});
-				console.log(departuresByDay);
-				departuresStamp = new Date();
-				callback();
+
+				updateDailyTrips(function(succes){
+					departuresStamp = new Date();
+					callback();
+				})
 			}
 		});
 	}
 }
-updateDeparts(function(){}); // Init.
+
+function updateDailyTrips(callback){
+	for (var i=0; i<countDays; i++){
+		var aimDate = new Date();
+		aimDate.setDate(Number(aimDate.getDate())+i);
+		aimDate.setHours(0,0,0,0);
+		var succeses = 0;
+		fetchTripsFromDay(aimDate, function(){
+			succeses = succeses + 1;
+			if (succeses>=countDays){
+				callback(true);
+			} 
+		});
+	}
+}
+
+
+console.log('Initializing...');
+updateDeparts(function(){;
+	console.log('Initialization complete!');
+}); // Init.
+
+function getDeparturesByDay(date, callback){
+	for (var i=0; i<departuresByDay.length; i++){
+		if (departuresByDay[i].date.getDate() == date.getDate() && departuresByDay[i].date.getMonth() == date.getMonth()){
+			callback(departuresByDay[i]);
+		}
+	}
+}
+
+function getTravelRecords(url, callback) {
+	request(url, function(err, res, body){
+		var body = JSON.parse(body);
+		if (!body.JourneyDetail || !body.JourneyDetail.Stop) {
+			callback(false);
+			return
+		} else {
+			callback(body.JourneyDetail.Stop);
+		}
+	});
+}
 
 
 // Middleware to check if we up to date.
@@ -146,10 +207,18 @@ function getWeekdaysFromNow(){
 	return t;
 }
 
+// Turn string weekday into the day number format (0-6)
+function dayToNumber(day, week) {
+	if (!week) week = weekdays;
+	for (var i=0; i < weekdays.length; i++) {
+		if (day.toUpperCase() == weekdays[i].toUpperCase()) {
+			return i;
+		}
+	}
+}
+
 ///////////////////////////
-// 
 //  JADE IS AWESOME, DUDE!
-//
 app.set('view engine', 'jade');
 
 app.use(express.static('public'));
@@ -161,17 +230,76 @@ app.use(function(req, res, next){
 	});
 });
 
+
+var dailyTrips = [];
 // Page for each day of the week to show statistics on.
 app.get('/days/:day', function(req, res){
-	res.render('days', {weekdays: getWeekdaysFromNow(), chosenDay: req.params.day})
+	// If errorenous url is given, go to today's date.
+	if (weekdays.indexOf(req.params.day) <= -1) {
+		req.params.day = getWeekdaysFromNow()[0];
+	}
+
+	var targetDate = new Date();
+	targetDate.setHours(0,0,0,0);
+	var targetDayNum = dayToNumber(req.params.day, getWeekdaysFromNow()); // Should give number FROM today's date.
+	targetDate.setDate(Number(targetDate.getDate())+Number(targetDayNum)); // Today's date + the week day
+	
+	fetchTripsFromDay(targetDate, function(lastStops){
+		res.render('days', {
+				weekdays: getWeekdaysFromNow()
+			,  	chosenDay: req.params.day
+			, 	lastStops: JSON.stringify(lastStops)
+		});		
+	})
 });
 
-// Landing...
+
+function fetchTripsFromDay(targetDate, callback){
+	for (var i=0; i<dailyTrips.length; i++){
+		if (dailyTrips[i].date.getTime() == targetDate.getTime()) {
+			callback(dailyTrips[i].trips); 
+			return;
+		}
+	}
+
+	// Find all last stops from day's departure.
+	var lastStops = [];
+	getDeparturesByDay(targetDate, function(departList){
+		departList = departList.departs;
+		var totalNum = departList.length;
+		for (var i=0; i<departList.length; i++) {
+			getTravelRecords(departList[i].JourneyDetailRef.ref, function(trip){
+				if (trip) {
+					lastStops.push(trip);
+				} else {
+					totalNum = totalNum - 1;
+				}
+				// When we've received all last stops, send data.
+				if (lastStops.length >= totalNum){
+					console.log('received all final dests');
+					dailyTrips.push({date: targetDate, trips: lastStops});
+					callback(lastStops);
+					return;
+				}
+			});
+		}
+	});
+}
+
+
+app.get('/days/', function(req, res){
+	res.redirect('/days/' + getWeekdaysFromNow()[0]);
+})
+
+// Landing page...
 app.get('/', function (req, res){
 	searchLocations('Aarhus H', function(locations){
-
-		res.render('index', {locations: JSON.stringify(locations), weekdays: getWeekdaysFromNow() });
-	});
+		res.render('index', {
+				locations: JSON.stringify(locations)
+			, 	weekdays: getWeekdaysFromNow() 
+			,	totalDeparts: departuresTotal
+		});
+	});		
 });
 
 // 404 daddy.
