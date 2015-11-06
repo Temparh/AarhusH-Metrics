@@ -266,11 +266,12 @@ function fetchTripsFromDay(targetDate, callback){
 				if (trip) {
 					lastStops.push(trip);
 				} else {
+					// Some references are falsely provided and return no value.
 					totalNum = totalNum - 1;
 				}
 				// When we've received all last stops, send data.
 				if (lastStops.length >= totalNum){
-					console.log('received all final dests');
+					console.log(lastStops.length + '/' + departList.length + ' or ' + Math.floor(lastStops.length / departList.length * 100) + '% reference calls succeded!');
 					dailyTrips.push({date: targetDate, trips: lastStops});
 					callback(lastStops);
 					return;
