@@ -288,6 +288,20 @@ app.set('view engine', 'jade');
 app.use(express.static('public'));
 app.use(favicon(__dirname + '/public/data/favicon.ico'));
 
+
+
+// Waiting page for initial visitor. 
+// Useful for handling Heroku's free node servers who sleep when inactive.
+app.use(function(req, res, next){
+	if (dataInProgress || !departuresStamp){
+		res.render('waiting', {
+			redirectTo: req.originalUrl
+		});
+	}
+	next();
+});
+
+
 // Make sure our metrics are up to date.
 app.use(function(req, res, next){
 	checkUpdateDeparts(function(){

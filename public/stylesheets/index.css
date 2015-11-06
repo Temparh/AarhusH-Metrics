@@ -25,6 +25,11 @@ a.green{
 	color: green;
 }
 
+.vertical-center{
+  min-height: 100%;
+  vertical-align: middle;
+}
+
 
 .btn-custom {
   background-color: hsl(120, 69%, 22%) !important;

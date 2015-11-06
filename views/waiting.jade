@@ -1,0 +1,20 @@
+doctype htm
+html
+	head
+		Title Hovedbanegården..
+		link(href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
+		link(href='/stylesheets/index.css', rel='stylesheet')
+		script.
+			redirectTo = '#{redirectTo}';
+	body
+		div.container.jumbotron.vertical-centered
+			div.row
+				div.col-md-1
+				div.col-md-7
+					h1(id='dots') Please stand by
+					p You awoke our node server. Give it 30 seconds C:
+				div.col-md-4
+					img(src='data/snorlax2.gif')
+
+		script(src='/javascripts/waiting.js')
+
